@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>タイマーアプリケーション</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 2px;
+        background-color: rgba(0, 0, 0, 0.8);
+        font-family: "Share Tech Mono", monospace;
+        -webkit-app-region: drag;
+        user-select: none;
+      }
+      .timer-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      #title {
+        font-size: 12px;
+        color: #00ff00;
+        margin-bottom: 2px;
+        opacity: 0.8;
+        text-align: center;
+      }
+      .timer-display {
+        font-size: 48px;
+        font-weight: bold;
+        color: #00ff00;
+        text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        margin: 0;
+        line-height: 1;
+        font-family: "Share Tech Mono", monospace;
+      }
+      .timer-controls {
+        margin-top: 5px;
+        display: flex;
+        gap: 5px;
+        -webkit-app-region: no-drag;
+      }
+      .control-button {
+        background: none;
+        border: none;
+        color: #00ff00;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 3px;
+        opacity: 0.8;
+        transition: all 0.2s;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+      }
+      .control-button:hover {
+        opacity: 1;
+        background-color: rgba(0, 255, 0, 0.1);
+      }
+      .control-button.add {
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="timer-container">
+      <div id="title"></div>
+      <div id="display" class="timer-display">00:00</div>
+      <div class="timer-controls">
+        <button onclick="startTimer()" class="control-button">▶</button>
+        <button onclick="stopTimer()" class="control-button">⏸</button>
+        <button onclick="resetTimer()" class="control-button">⟲</button>
+        <button onclick="addMinute()" class="control-button add">+1</button>
+        <button onclick="addFiveMinutes()" class="control-button add">
+          +5
+        </button>
+      </div>
+    </div>
+    <script src="renderer.js"></script>
+  </body>
+</html>
