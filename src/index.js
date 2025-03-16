@@ -14,12 +14,12 @@ let tray = null;
 let mainWindow = null;
 let tasks = [];
 
-// 時間文字列をパースする関数
+// Parse time string function
 function parseTimeString(timeStr) {
-  console.log("時間文字列のパース開始:", timeStr);
+  console.log("Starting time string parse:", timeStr);
   const match = timeStr.match(/^(\d+)(s|m|h|d)$/);
   if (!match) {
-    console.log("時間文字列のパース失敗: 無効な形式");
+    console.log("Time string parse failed: Invalid format");
     return null;
   }
 
@@ -44,42 +44,42 @@ function parseTimeString(timeStr) {
       result = null;
   }
 
-  console.log("時間文字列のパース結果:", result, "秒");
+  console.log("Time string parse result:", result, "seconds");
   return result;
 }
 
-// コマンド文字列をパースする関数
+// Parse command string function
 function parseCommand(command) {
-  console.log("コマンドのパース開始:", command);
+  console.log("Starting command parse:", command);
   const parts = command.trim().split(/\s+/);
   if (parts.length < 2) {
-    console.log("コマンドのパース失敗: 不十分な部分");
+    console.log("Command parse failed: Insufficient parts");
     return null;
   }
 
   const timeStr = parts[0];
   const title = parts.slice(1).join(" ");
-  console.log("分割結果 - 時間:", timeStr, "タイトル:", title);
+  console.log("Split result - Time:", timeStr, "Title:", title);
 
   const seconds = parseTimeString(timeStr);
   if (seconds === null) {
-    console.log("コマンドのパース失敗: 無効な時間形式");
+    console.log("Command parse failed: Invalid time format");
     return null;
   }
 
   const result = { title, seconds };
-  console.log("コマンドのパース成功:", result);
+  console.log("Command parse successful:", result);
   return result;
 }
 
-// アプリケーションの準備ができたら
+// When application is ready
 app.whenReady().then(() => {
-  // Dockアイコンを非表示に（macOSのみ）
+  // Hide Dock icon (macOS only)
   if (process.platform === "darwin") {
     app.dock.hide();
   }
 
-  // グローバルショートカットの登録
+  // Register global shortcut
   globalShortcut.register("CommandOrControl+Shift+T", () => {
     showNewTimerDialog();
   });
@@ -88,28 +88,28 @@ app.whenReady().then(() => {
   createTray();
 });
 
-// アプリケーションがアクティブになったとき（macOSのみ）
+// Application is activated (macOS only)
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
 });
 
-// すべてのウィンドウが閉じられたとき
+// When all windows are closed
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
-// アプリケーション終了時
+// Application exit
 app.on("will-quit", () => {
-  // グローバルショートカットの登録解除
+  // Unregister global shortcut
   globalShortcut.unregisterAll();
 });
 
 async function showNewTimerDialog() {
-  console.log("タイマー作成ダイアログを表示します");
+  console.log("Displaying timer creation dialog");
   const inputDialog = new BrowserWindow({
     width: 400,
     height: 80,
@@ -129,22 +129,22 @@ async function showNewTimerDialog() {
   const dialogPath = path.join(__dirname, "dialog.html");
   await inputDialog.loadFile(dialogPath);
   inputDialog.show();
-  console.log("ダイアログを表示しました");
+  console.log("Dialog displayed");
 
-  // ESCキーでダイアログを閉じる
+  // Close dialog with ESC key
   inputDialog.webContents.on("before-input-event", (event, input) => {
     if (input.key === "Escape") {
-      console.log("ESCキーが押されたためダイアログを閉じます");
+      console.log("ESC key pressed, closing dialog");
       inputDialog.close();
     }
   });
 
-  // タイマー作成イベントの処理
+  // Handle timer creation event
   ipcMain.once("create-new-timer", (event, data) => {
-    console.log("create-new-timer イベントを受信:", data);
+    console.log("Received create-new-timer event:", data);
     const task = parseCommand(data.command);
     if (task) {
-      console.log("新しいタスクを作成します:", task);
+      console.log("Creating new task:", task);
       tasks.push(task);
       updateTrayMenu();
       mainWindow.webContents.send("start-timer", {
@@ -153,24 +153,24 @@ async function showNewTimerDialog() {
       });
       inputDialog.close();
     } else {
-      console.log("タスク作成失敗: 無効なコマンド形式");
+      console.log("Task creation failed: Invalid command format");
       dialog.showMessageBox(inputDialog, {
         type: "error",
-        title: "エラー",
-        message: "無効な形式です",
-        detail: "正しい形式で入力してください（例: 30m 作業）",
+        title: "Error",
+        message: "Invalid format",
+        detail: "Please enter in the correct format (e.g., 30m work)",
       });
     }
   });
 
-  // キャンセル時の処理
+  // Handle cancellation
   ipcMain.once("cancel-new-timer", () => {
-    console.log("タイマー作成をキャンセルしました");
+    console.log("Timer creation cancelled");
     inputDialog.close();
   });
 }
 
-// コマンドライン引数の処理を修正
+// Command line argument processing
 function handleCommandLineArgs(args) {
   if (args.length < 2) return null;
 
@@ -179,7 +179,7 @@ function handleCommandLineArgs(args) {
 }
 
 function createWindow() {
-  // コマンドライン引数の処理
+  // Command line argument processing
   const args = process.argv.slice(2);
   const task = handleCommandLineArgs(args);
 
@@ -215,7 +215,7 @@ function createWindow() {
 
 function createTaskMenu() {
   const taskMenuItems = tasks.map((task, index) => ({
-    label: `${task.title} (${Math.floor(task.seconds / 60)}分)`,
+    label: `${task.title} (${Math.floor(task.seconds / 60)} minutes)`,
     click: () => {
       mainWindow.webContents.send("start-timer", {
         timerTitle: task.title,
@@ -224,7 +224,7 @@ function createTaskMenu() {
     },
     submenu: [
       {
-        label: "削除",
+        label: "Delete",
         click: () => {
           tasks.splice(index, 1);
           updateTrayMenu();
@@ -236,7 +236,7 @@ function createTaskMenu() {
 
   return [
     {
-      label: "新しいタイマー",
+      label: "New Timer",
       click: () => {
         showNewTimerDialog();
       },
@@ -244,7 +244,7 @@ function createTaskMenu() {
     { type: "separator" },
     ...(tasks.length > 0 ? [...taskMenuItems, { type: "separator" }] : []),
     {
-      label: "終了",
+      label: "Exit",
       click: () => {
         app.quit();
       },
@@ -259,18 +259,18 @@ function updateTrayMenu() {
 
 function createTray() {
   try {
-    // macOSの場合はテンプレート画像を使用
+    // Use template image for macOS
     const iconPath =
       process.platform === "darwin"
         ? path.join(__dirname, "iconTemplate.png")
         : path.join(__dirname, "icon.png");
 
-    console.log("Icon path:", iconPath); // デバッグ用
+    console.log("Icon path:", iconPath); // Debug info
 
     const icon = nativeImage.createFromPath(iconPath);
     if (icon.isEmpty()) {
       console.error("Failed to load icon image");
-      // フォールバックアイコンを作成（PNGとして）
+      // Create fallback icon (as PNG)
       const fallbackIcon = nativeImage.createEmpty();
       const size = process.platform === "darwin" ? 16 : 32;
       fallbackIcon.addRepresentation({
@@ -303,11 +303,11 @@ function createTray() {
       tray = new Tray(icon);
     }
 
-    // メニューを作成
+    // Create menu
     updateTrayMenu();
-    tray.setToolTip("タイマー");
+    tray.setToolTip("Timer");
 
-    // アイコンのクリックイベント
+    // Icon click event
     tray.on("click", () => {
       if (mainWindow) {
         if (mainWindow.isVisible()) {
@@ -322,7 +322,7 @@ function createTray() {
   }
 }
 
-// プログレスバーの更新を処理
+// Progress bar update processing
 ipcMain.on("update-progress", (event, progress) => {
   if (mainWindow) {
     if (progress > 0) {
@@ -333,7 +333,7 @@ ipcMain.on("update-progress", (event, progress) => {
   }
 });
 
-// タイマー削除時の処理
+// Timer deletion processing
 ipcMain.on("delete-timer", () => {
   if (mainWindow) {
     mainWindow.setProgressBar(-1);
