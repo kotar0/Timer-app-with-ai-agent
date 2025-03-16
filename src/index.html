@@ -2,6 +2,10 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com"
+    />
     <title>タイマーアプリケーション</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"
@@ -65,8 +69,11 @@
         opacity: 1;
         background-color: rgba(0, 255, 0, 0.1);
       }
-      .control-button.add {
-        font-size: 16px;
+      .control-button.delete {
+        color: #ff3b30;
+      }
+      .control-button.delete:hover {
+        background-color: rgba(255, 59, 48, 0.1);
       }
     </style>
   </head>
@@ -75,13 +82,12 @@
       <div id="title"></div>
       <div id="display" class="timer-display">00:00</div>
       <div class="timer-controls">
-        <button onclick="startTimer()" class="control-button">▶</button>
-        <button onclick="stopTimer()" class="control-button">⏸</button>
-        <button onclick="resetTimer()" class="control-button">⟲</button>
-        <button onclick="addMinute()" class="control-button add">+1</button>
-        <button onclick="addFiveMinutes()" class="control-button add">
-          +5
+        <button class="control-button" id="playButton">▶</button>
+        <button class="control-button" id="pauseButton" style="display: none">
+          ⏸
         </button>
+        <button class="control-button" id="resetButton">⟲</button>
+        <button class="control-button delete" id="deleteButton">✕</button>
       </div>
     </div>
     <script src="renderer.js"></script>

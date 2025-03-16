@@ -1,14 +1,15 @@
-const { ipcRenderer } = require("electron");
-
-let timer;
-let secondsRemaining = 0;
+let timerInterval;
+let currentSeconds = 0;
+let initialSeconds = 0;
+let isRunning = false;
 let currentTitle = "";
 
-const timerElement = document.getElementById("timer");
 const titleElement = document.getElementById("title");
-const startButton = document.getElementById("startButton");
+const displayElement = document.getElementById("display");
+const playButton = document.getElementById("playButton");
 const pauseButton = document.getElementById("pauseButton");
 const resetButton = document.getElementById("resetButton");
+const deleteButton = document.getElementById("deleteButton");
 
 function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
@@ -19,83 +20,145 @@ function formatTime(seconds) {
 }
 
 function updateDisplay() {
-  document.getElementById("display").innerText = formatTime(secondsRemaining);
-  document.getElementById("title").innerText = currentTitle;
-  timerElement.textContent = formatTime(secondsRemaining);
+  const timeString = formatTime(currentSeconds);
+  console.log("画面表示を更新:", {
+    timeString,
+    title: currentTitle,
+    progress: initialSeconds > 0 ? currentSeconds / initialSeconds : 0,
+  });
+
+  displayElement.textContent = timeString;
   titleElement.textContent = currentTitle;
+
+  // プログレスバーの更新
+  if (initialSeconds > 0) {
+    const progress = currentSeconds / initialSeconds;
+    window.electronAPI.updateProgress(progress);
+  }
 }
 
 function startTimer() {
-  if (timer) return;
+  console.log("startTimer関数が呼び出されました");
+  console.log("現在の状態:", {
+    isRunning,
+    currentSeconds,
+    currentTitle,
+    initialSeconds,
+  });
 
-  if (secondsRemaining <= 0) return;
+  if (!isRunning && currentSeconds > 0) {
+    console.log("タイマーを開始します");
+    isRunning = true;
+    playButton.style.display = "none";
+    pauseButton.style.display = "inline-block";
 
-  timer = setInterval(() => {
-    if (secondsRemaining > 0) {
-      secondsRemaining--;
-      updateDisplay();
-    } else {
-      clearInterval(timer);
-      timer = null;
-      new Notification("タイマー終了", {
-        body: `"${currentTitle}" のカウントダウンが終了しました`,
+    timerInterval = setInterval(() => {
+      currentSeconds--;
+      console.log("カウントダウン:", {
+        currentSeconds,
+        currentTitle,
+        progress: currentSeconds / initialSeconds,
       });
       updateDisplay();
-    }
-  }, 1000);
 
-  updateDisplay();
+      if (currentSeconds <= 0) {
+        console.log("タイマーが終了しました");
+        stopTimer();
+        // 通知の改善
+        new Notification(currentTitle || "タイマー", {
+          body: `${formatTime(initialSeconds)}のタイマーが終了しました`,
+          silent: false,
+        });
+      }
+    }, 1000);
+  } else {
+    console.log("タイマーを開始できません:", {
+      isRunning,
+      currentSeconds,
+      reason: isRunning ? "既に実行中" : "秒数が0以下",
+    });
+  }
 }
 
 function stopTimer() {
-  if (timer) {
-    clearInterval(timer);
-    timer = null;
-    updateDisplay();
+  console.log("stopTimer関数が呼び出されました");
+  if (isRunning) {
+    console.log("タイマーを停止します");
+    isRunning = false;
+    clearInterval(timerInterval);
+    playButton.style.display = "inline-block";
+    pauseButton.style.display = "none";
+  } else {
+    console.log("タイマーは既に停止しています");
   }
 }
 
 function resetTimer() {
   stopTimer();
-  secondsRemaining = 0;
+  currentSeconds = initialSeconds;
   updateDisplay();
 }
 
+function deleteTimer() {
+  stopTimer();
+  currentSeconds = 0;
+  initialSeconds = 0;
+  currentTitle = "";
+  titleElement.textContent = "";
+  updateDisplay();
+  window.electronAPI.deleteTimer();
+}
+
 function addMinute() {
-  secondsRemaining += 60;
+  currentSeconds += 60;
   updateDisplay();
 }
 
 function addFiveMinutes() {
-  secondsRemaining += 300;
+  currentSeconds += 300;
   updateDisplay();
 }
 
-// Alfred などからの起動で自動開始する場合のリスナー
-window.electronAPI.onStartTimer(({ timerTitle, timerSeconds }) => {
-  if (timerTitle) {
-    currentTitle = timerTitle;
-  }
-  if (timerSeconds > 0) {
-    secondsRemaining = timerSeconds;
-    startTimer();
-  }
-  updateDisplay();
+// イベントリスナーを設定
+playButton.addEventListener("click", () => {
+  console.log("再生ボタンがクリックされました");
+  startTimer();
 });
 
-// イベントリスナーを設定
-startButton.addEventListener("click", startTimer);
-pauseButton.addEventListener("click", stopTimer);
-resetButton.addEventListener("click", resetTimer);
+pauseButton.addEventListener("click", () => {
+  console.log("一時停止ボタンがクリックされました");
+  stopTimer();
+});
+
+resetButton.addEventListener("click", () => {
+  console.log("リセットボタンがクリックされました");
+  resetTimer();
+});
+
+deleteButton.addEventListener("click", () => {
+  console.log("削除ボタンがクリックされました");
+  deleteTimer();
+});
 
 // メインプロセスからのタイマー開始メッセージを受信
-ipcRenderer.on("start-timer", (event, data) => {
-  if (data.timerTitle) {
-    currentTitle = data.timerTitle;
-  }
-  if (data.timerSeconds > 0) {
-    secondsRemaining = data.timerSeconds;
-    startTimer();
-  }
+window.electronAPI.onStartTimer((event, { timerTitle, timerSeconds }) => {
+  console.log("タイマー開始イベントを受信:", { timerTitle, timerSeconds });
+  stopTimer();
+  currentTitle = timerTitle;
+  currentSeconds = timerSeconds;
+  initialSeconds = timerSeconds;
+  console.log("タイマーの状態を設定:", {
+    currentTitle,
+    currentSeconds,
+    initialSeconds,
+  });
+  titleElement.textContent = currentTitle;
   updateDisplay();
+  startTimer();
 });
+
+// グローバルにエクスポート（HTML側で使用）
+window.startTimer = startTimer;
+window.stopTimer = stopTimer;
+window.resetTimer = resetTimer;
+window.deleteTimer = deleteTimer;

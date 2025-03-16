@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 10px;
+        background-color: rgba(0, 0, 0, 0.8);
+        border-radius: 6px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      input {
+        width: 100%;
+        padding: 8px 12px;
+        font-size: 16px;
+        background: transparent;
+        border: none;
+        color: white;
+        outline: none;
+      }
+      input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+      }
+      .hint {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 12px;
+        padding: 0 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="commandForm">
+      <input
+        type="text"
+        id="command"
+        autofocus
+        placeholder="時間 タスク名 (例: 30m ミーティング)"
+      />
+      <div class="hint">時間形式: 30s, 10m, 1h, 1d</div>
+    </form>
+    <script src="dialog.js"></script>
+  </body>
+</html>
