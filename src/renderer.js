@@ -64,11 +64,7 @@ function startTimer() {
       if (currentSeconds <= 0) {
         console.log("タイマーが終了しました");
         stopTimer();
-        // 通知の改善
-        new Notification(currentTitle || "タイマー", {
-          body: `${formatTime(initialSeconds)}のタイマーが終了しました`,
-          silent: false,
-        });
+        onTimerComplete();
       }
     }, 1000);
   } else {
@@ -162,3 +158,22 @@ window.startTimer = startTimer;
 window.stopTimer = stopTimer;
 window.resetTimer = resetTimer;
 window.deleteTimer = deleteTimer;
+
+// 点滅エフェクトの制御
+window.electronAPI.onStartBlink(() => {
+  console.log("点滅エフェクトを開始します");
+  const container = document.querySelector(".timer-container");
+  container.classList.add("blink");
+
+  // 5秒後に点滅を停止
+  setTimeout(() => {
+    console.log("点滅エフェクトを停止します");
+    container.classList.remove("blink");
+  }, 5000);
+});
+
+// タイマー終了時の処理
+function onTimerComplete() {
+  console.log("タイマーが完了しました:", currentTitle);
+  window.electronAPI.timerComplete(currentTitle);
+}

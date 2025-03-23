@@ -11,4 +11,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   createNewTimer: (command) =>
     ipcRenderer.send("create-new-timer", { command }),
   cancelNewTimer: () => ipcRenderer.send("cancel-new-timer"),
+  onStartBlink: (callback) =>
+    ipcRenderer.on("start-blink", (_event) => {
+      console.log("preload: start-blinkイベントを受信");
+      callback();
+    }),
+  timerComplete: (title) => ipcRenderer.send("timer-complete", { title }),
 });

@@ -7,6 +7,7 @@ const {
   nativeImage,
   globalShortcut,
   ipcMain,
+  Notification,
 } = require("electron");
 const path = require("path");
 
@@ -164,9 +165,16 @@ async function showNewTimerDialog() {
   });
 
   // Handle cancellation
-  ipcMain.once("cancel-new-timer", () => {
+  const cancelHandler = () => {
     console.log("Timer creation cancelled");
     inputDialog.close();
+    ipcMain.removeListener("cancel-timer", cancelHandler);
+  };
+  ipcMain.on("cancel-timer", cancelHandler);
+
+  // Clean up when dialog is closed
+  inputDialog.on("closed", () => {
+    ipcMain.removeListener("cancel-timer", cancelHandler);
   });
 }
 
@@ -338,4 +346,20 @@ ipcMain.on("delete-timer", () => {
   if (mainWindow) {
     mainWindow.setProgressBar(-1);
   }
+});
+
+function showNotification(title) {
+  const notification = new Notification({
+    title: "タイマー終了",
+    body: `${title}の時間が終了しました`,
+    silent: false,
+  });
+  notification.show();
+}
+
+// タイマー終了時のイベントハンドラ
+ipcMain.on("timer-complete", (event, { title }) => {
+  showNotification(title);
+  // メインウィンドウに点滅エフェクトを要求
+  event.reply("start-blink");
 });
